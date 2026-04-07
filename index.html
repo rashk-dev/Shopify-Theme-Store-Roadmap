@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopify Theme — Dev Roadmap</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .badge--setup { background: rgba(249, 115, 22, 0.15); color: var(--orange); }
+    :root {
+      --bg: #0e0e0e;
+      --surface: #161616;
+      --surface-2: #1e1e1e;
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.14);
+      --text: #e8e8e8;
+      --muted: #666;
+      --muted-2: #444;
+      --accent: #7c6dfa;
+      --accent-2: #a78bfa;
+      --green: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.08);
+      --green-border: rgba(34, 197, 94, 0.2);
+      --orange: #f97316;
+      --blue: #38bdf8;
+      --pink: #f472b6;
+      --yellow: #fbbf24;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── Grid background ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 24px 100px;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      margin-bottom: 72px;
+    }
+
+    .site-header__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .site-header__eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .site-header__eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 1px;
+      background-color: var(--accent);
+    }
+
+    .site-header__title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .site-header__title em {
+      font-style: italic;
+      color: var(--accent-2);
+    }
+
+    .store-info {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      min-width: 220px;
+      flex-shrink: 0;
+    }
+
+    .store-info__label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .store-info__value {
+      font-size: 0.9rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .store-info__value.editable {
+      color: var(--accent-2);
+      cursor: pointer;
+      border-bottom: 1px dashed var(--muted-2);
+      display: inline-block;
+    }
+
+    .store-info__value.editable:hover {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .store-info__row {
+      margin-bottom: 12px;
+    }
+
+    .store-info__row:last-child { margin-bottom: 0; }
+
+    /* ── Progress ── */
+    .progress-section {
+      margin-top: 40px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .progress-ring-wrap {
+      flex-shrink: 0;
+      position: relative;
+      width: 72px;
+      height: 72px;
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring__track {
+      fill: none;
+      stroke: var(--surface-2);
+      stroke-width: 5;
+    }
+
+    .progress-ring__fill {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 188.5;
+      stroke-dashoffset: 188.5;
+      transition: stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .progress-ring__text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 400;
+    }
+
+    .progress-info {
+      flex: 1;
+    }
+
+    .progress-info__title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .progress-info__subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .progress-bar {
+      margin-top: 12px;
+      height: 3px;
+      background: var(--surface-2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar__fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 99px;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      width: 0%;
+    }
+
+    /* ── Roadmap ── */
+    .roadmap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ── Phase Label ── */
+    .phase-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 28px 0 10px;
+    }
+
+    .phase-label__number {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      flex-shrink: 0;
+    }
+
+    .phase-label__line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .phase-label__text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .card.is-open {
+      border-color: var(--border-hover);
+      box-shadow: 0 0 0 1px var(--border);
+    }
+
+    .card.is-done {
+      background: var(--green-bg);
+      border-color: var(--green-border);
+    }
+
+    /* ── Card Header ── */
+    .card__header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card__checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 1.5px solid var(--muted-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .card__checkbox:hover {
+      border-color: var(--green);
+    }
+
+    .card.is-done .card__checkbox {
+      background-color: var(--green);
+      border-color: var(--green);
+    }
+
+    .card__checkbox svg {
+      width: 11px;
+      height: 11px;
+      stroke: #000;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .card.is-done .card__checkbox svg { opacity: 1; }
+
+    .card__info { flex: 1; min-width: 0; }
+
+    .card__title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .card.is-done .card__title {
+      color: var(--green);
+      text-decoration: line-through;
+      text-decoration-color: rgba(34, 197, 94, 0.4);
+    }
+
+    .card__badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 400;
+    }
+
+    .badge--foundation { background: rgba(124, 109, 250, 0.15); color: var(--accent-2); }
+    .badge--global { background: rgba(56, 189, 248, 0.15); color: var(--blue); }
+    .badge--homepage { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+    .badge--page { background: rgba(244, 114, 182, 0.15); color: var(--pink); }
+    .badge--deploy { background: rgba(249, 115, 22, 0.15); color: var(--orange); }
+    .badge--done { background: var(--green-bg); color: var(--green); }
+
+    .card__files {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .card__toggle {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: transform 0.3s ease, color 0.2s ease;
+    }
+
+    .card__toggle svg { width: 14px; height: 14px; }
+    .card.is-open .card__toggle { transform: rotate(180deg); color: var(--accent); }
+
+    /* ── Card Body ── */
+    .card__body {
+      display: none;
+      padding: 0 20px 20px 54px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .card.is-open .card__body { display: block; }
+
+    .card__note {
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: #888;
+      margin-bottom: 14px;
+    }
+
+    .card__tasks {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 16px;
+    }
+
+    .card__task {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: #777;
+      line-height: 1.5;
+    }
+
+    .card__task::before {
+      content: '▸';
+      color: var(--accent);
+      flex-shrink: 0;
+      font-size: 0.65rem;
+      margin-top: 2px;
+    }
+
+    .card__file-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .file-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      background: var(--surface-2);
+      color: var(--accent-2);
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.02em;
+    }
+
+    .card.is-done .file-tag {
+      background: var(--green-bg);
+      color: var(--green);
+      border-color: var(--green-border);
+    }
+
+    /* ── Edit Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.is-open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border-hover);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 440px;
+      margin: 24px;
+    }
+
+    .modal__title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .modal__subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .modal__field {
+      margin-bottom: 16px;
+    }
+
+    .modal__label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .modal__input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .modal__input:focus { border-color: var(--accent); }
+
+    .modal__actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .modal__btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .modal__btn--primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .modal__btn--primary:hover { background: var(--accent-2); }
+
+    .modal__btn--secondary {
+      background: var(--surface-2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .modal__btn--secondary:hover { color: var(--text); }
+
+    /* ── Footer ── */
+    .site-footer {
+      text-align: center;
+      margin-top: 80px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .site-footer span { color: var(--accent-2); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .wrapper { padding: 48px 16px 80px; }
+      .site-header__top { flex-direction: column; }
+      .store-info { width: 100%; }
+      .progress-section { flex-direction: column; align-items: flex-start; }
+      .card__body { padding-left: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h2 class="modal__title">Project Details</h2>
+      <p class="modal__subtitle">Set up your store info for this project</p>
+      <div class="modal__field">
+        <label class="modal__label" for="input-store">Store Name</label>
+        <input class="modal__input" id="input-store" type="text" placeholder="e.g. My Fashion Store">
+      </div>
+      <div class="modal__field">
+        <label class="modal__label" for="input-url">Store URL</label>
+        <input class="modal__input" id="input-url" type="text" placeholder="e.g. mystore.myshopify.com">
+      </div>
+      <div class="modal__field">
+        <label class="modal__label" for="input-theme">Theme Name</label>
+        <input class="modal__input" id="input-theme" type="text" placeholder="e.g. my-custom-theme">
+      </div>
+      <div class="modal__field">
+        <label class="modal__label" for="input-type">Store Type</label>
+        <input class="modal__input" id="input-type" type="text" placeholder="e.g. Fashion, Beauty, Tech...">
+      </div>
+      <div class="modal__actions">
+        <button class="modal__btn modal__btn--secondary" onclick="closeModal()">Cancel</button>
+        <button class="modal__btn modal__btn--primary" onclick="saveProject()">Save Project</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrapper">
+
+    <!-- Header -->
+    <header class="site-header">
+      <div class="site-header__top">
+        <div>
+          <p class="site-header__eyebrow">Shopify Theme Development</p>
+          <h1 class="site-header__title">Dev<br><em>Roadmap</em></h1>
+        </div>
+
+        <div class="store-info">
+          <div class="store-info__row">
+            <div class="store-info__label">Store Name</div>
+            <div class="store-info__value editable" id="display-store" onclick="openModal()">Click to set up →</div>
+          </div>
+          <div class="store-info__row">
+            <div class="store-info__label">Store URL</div>
+            <div class="store-info__value editable" id="display-url" onclick="openModal()">—</div>
+          </div>
+          <div class="store-info__row">
+            <div class="store-info__label">Theme Name</div>
+            <div class="store-info__value editable" id="display-theme" onclick="openModal()">—</div>
+          </div>
+          <div class="store-info__row">
+            <div class="store-info__label">Store Type</div>
+            <div class="store-info__value editable" id="display-type" onclick="openModal()">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-section">
+        <div class="progress-ring-wrap">
+          <svg class="progress-ring" width="72" height="72" viewBox="0 0 72 72">
+            <circle class="progress-ring__track" cx="36" cy="36" r="30"/>
+            <circle class="progress-ring__fill" id="ring-fill" cx="36" cy="36" r="30"/>
+          </svg>
+          <div class="progress-ring__text" id="ring-text">0%</div>
+        </div>
+        <div class="progress-info">
+          <div class="progress-info__title" id="progress-title">0 of 0 tasks completed</div>
+          <div class="progress-info__subtitle">Click the checkbox to mark a task done. Your progress saves automatically.</div>
+          <div class="progress-bar">
+            <div class="progress-bar__fill" id="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Roadmap -->
+    <main class="roadmap" id="roadmap">
+
+        <div class="phase-label">
+  <span class="phase-label__number">00</span>
+  <span class="phase-label__line"></span>
+  <span class="phase-label__text">Setup Commands</span>
+</div>
+
+<div class="card" data-id="shopify-cli">
+  <div class="card__header">
+    <div class="card__checkbox" onclick="toggleDone(event,this)">
+      <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+    </div>
+    <div class="card__info">
+      <div class="card__title">Shopify CLI Setup <span class="card__badge badge--deploy">Setup</span></div>
+      <div class="card__files">shopify theme commands</div>
+    </div>
+    <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+  </div>
+  <div class="card__body">
+    <p class="card__note">Initialize your theme project using Shopify CLI. This creates the foundation for your development workflow and connects to your store.</p>
+    <ul class="card__tasks">
+      <li class="card__task">Install Shopify CLI globally on your machine</li>
+      <li class="card__task">Navigate to your project folder</li>
+      <li class="card__task">Run: shopify theme init</li>
+      <li class="card__task">cd storename</li>
+      <li class="card__task">code .</li>
+      <li class="card__task">shopify theme dev</li>
+    </ul>
+    <div class="card__file-tags">
+      <span class="file-tag">shopify theme init</span>
+      <span class="file-tag">shopify theme dev</span>
+    </div>
+  </div>
+</div>
+
+<div class="card" data-id="git-setup">
+  <div class="card__header">
+    <div class="card__checkbox" onclick="toggleDone(event,this)">
+      <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+    </div>
+    <div class="card__info">
+      <div class="card__title">Git Initialize & Push <span class="card__badge badge--deploy">Setup</span></div>
+      <div class="card__files">git init → git push origin main</div>
+    </div>
+    <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+  </div>
+  <div class="card__body">
+    <p class="card__note">Initialize Git in your project folder and set up version control. Follow these commands in order to prepare your theme for GitHub.</p>
+    <ul class="card__tasks">
+      <li class="card__task">Make the Repo, keep it private and no Readme file</li>
+      <li class="card__task">Initialize Git: git init</li>
+      <li class="card__task">Create .gitignore file in root folder (echo ".DS_Store\nnode_modules/\n*.log\nconfig.yml" > .gitignore)</li>
+      <li class="card__task">Add node_modules/, .env, and other sensitive files to .gitignore</li>
+      <li class="card__task">Stage all files: git add .</li>
+      <li class="card__task">Make first commit: git commit -m "Initial theme setup"</li>
+      <li class="card__task">Set main branch: git branch -M main</li>
+      <li class="card__task">Connect to GitHub: git remote add origin [your-repo-url]</li>
+      <li class="card__task">Push to GitHub: git push -u origin main</li>
+      <li class="card__task">git add . || git commit -m "describe your changes" || git push</li>
+    </ul>
+    <div class="card__file-tags">
+      <span class="file-tag">git init</span>
+      <span class="file-tag">git add .</span>
+      <span class="file-tag">git commit -m</span>
+      <span class="file-tag">git push origin main</span>
+    </div>
+  </div>
+</div>
+
+      <div class="phase-label">
+        <span class="phase-label__number">01</span>
+        <span class="phase-label__line"></span>
+        <span class="phase-label__text">Foundation</span>
+      </div>
+
+      <div class="card" data-id="locales">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Locales <span class="card__badge badge--foundation">Foundation</span></div>
+            <div class="card__files">locales/en.default.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Translation keys for all customizer labels and UI text. Every t: key in schema must have a matching entry here.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Add general, labels, options translation keys</li>
+            <li class="card__task">Add cart, search, password, 404 text strings</li>
+            <li class="card__task">Ensure all t: keys match settings_schema.json</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">locales/en.default.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="settings-schema">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Settings Schema <span class="card__badge badge--foundation">Foundation</span></div>
+            <div class="card__files">config/settings_schema.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Defines every setting in Theme Settings panel. Colors, fonts, spacing, buttons, nav, footer. Each id becomes a settings.id Liquid variable.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Typography — primary + secondary font pickers</li>
+            <li class="card__task">Layout — page width + margin settings</li>
+            <li class="card__task">Colors — background, foreground, accent, secondary</li>
+            <li class="card__task">Buttons — color, text color, border radius</li>
+            <li class="card__task">Navigation — header bg + text color</li>
+            <li class="card__task">Footer — footer bg + text color</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">config/settings_schema.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="css-variables">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">CSS Variables <span class="card__badge badge--foundation">Foundation</span></div>
+            <div class="card__files">snippets/css-variables.liquid</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Bridges customizer → CSS. Outputs all settings as :root CSS variables. Also defines spacing scale and typography scale for consistent design.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Map all color settings to --color- variables</li>
+            <li class="card__task">Map font settings to --font- variables</li>
+            <li class="card__task">Add spacing scale: --space-xs to --space-2xl</li>
+            <li class="card__task">Add typography scale: --text-sm to --text-5xl</li>
+            <li class="card__task">Add button and input radius variables</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">snippets/css-variables.liquid</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="critical-css">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Critical CSS + theme.liquid <span class="card__badge badge--foundation">Foundation</span></div>
+            <div class="card__files">assets/critical.css + layout/theme.liquid</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">theme.liquid is the master HTML shell that wraps every page. critical.css loads on every page — contains resets, body styles and the section grid layout system.</p>
+          <ul class="card__tasks">
+            <li class="card__task">CSS reset — box-sizing, margins, media elements</li>
+            <li class="card__task">Body font, background, color from CSS variables</li>
+            <li class="card__task">Section grid system — .shopify-section layout</li>
+            <li class="card__task">.full-width utility class for edge to edge sections</li>
+            <li class="card__task">Verify content_for_header and content_for_layout in theme.liquid</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">assets/critical.css</span>
+            <span class="file-tag">layout/theme.liquid</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-label">
+        <span class="phase-label__number">02</span>
+        <span class="phase-label__line"></span>
+        <span class="phase-label__text">Global Sections</span>
+      </div>
+
+      <div class="card" data-id="header">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Header <span class="card__badge badge--global">Global</span></div>
+            <div class="card__files">sections/header.liquid + sections/header-group.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Sticky header on every page. Loaded via header-group.json. Desktop: logo + nav + icons. Mobile: hamburger left, logo center, icons right.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Logo — image picker or text fallback</li>
+            <li class="card__task">Desktop navigation with dropdown support</li>
+            <li class="card__task">Search, Account, Cart icons</li>
+            <li class="card__task">Mobile hamburger → X animation</li>
+            <li class="card__task">Mobile menu with submenu accordion</li>
+            <li class="card__task">Click outside to close menus</li>
+            <li class="card__task">Active link state on current page</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/header.liquid</span>
+            <span class="file-tag">sections/header-group.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="footer">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Footer <span class="card__badge badge--global">Global</span></div>
+            <div class="card__files">sections/footer.liquid + sections/footer-group.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Footer on every page. Uses --color-footer-background and --color-footer-text. Contains brand info, nav links, social icons and copyright.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Brand name + tagline</li>
+            <li class="card__task">Footer navigation links from menu picker</li>
+            <li class="card__task">Social media icons (Instagram, TikTok etc.)</li>
+            <li class="card__task">Copyright line with shop.name</li>
+            <li class="card__task">Mobile stacked responsive layout</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/footer.liquid</span>
+            <span class="file-tag">sections/footer-group.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-label">
+        <span class="phase-label__number">03</span>
+        <span class="phase-label__line"></span>
+        <span class="phase-label__text">Homepage</span>
+      </div>
+
+      <div class="card" data-id="hero">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Hero Section <span class="card__badge badge--homepage">Homepage</span></div>
+            <div class="card__files">sections/hero.liquid + templates/index.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">First thing visitors see. Full screen image, overlay, headline, subtext, CTA button. All content editable via customizer. Fallback to assets/ image.</p>
+          <ul class="card__tasks">
+            <li class="card__task">image_picker setting for background image</li>
+            <li class="card__task">Overlay opacity range slider (0–90%)</li>
+            <li class="card__task">Height selector: full / large / medium / small</li>
+            <li class="card__task">Subtitle, title, description text settings</li>
+            <li class="card__task">Button label + URL settings</li>
+            <li class="card__task">Text position: left / center / right</li>
+            <li class="card__task">Fallback image from assets/ folder</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/hero.liquid</span>
+            <span class="file-tag">assets/hero-image.jpg</span>
+            <span class="file-tag">templates/index.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="featured-products">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Featured Products <span class="card__badge badge--homepage">Homepage</span></div>
+            <div class="card__files">sections/featured-products.liquid</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Product grid on homepage. Collection picker in schema. Loops through products and renders cards. 4 columns desktop, 2 mobile.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Section title + view all link</li>
+            <li class="card__task">collection picker in schema settings</li>
+            <li class="card__task">Product card — image, title, price</li>
+            <li class="card__task">Responsive grid layout</li>
+            <li class="card__task">Add section to templates/index.json</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/featured-products.liquid</span>
+            <span class="file-tag">templates/index.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-label">
+        <span class="phase-label__number">04</span>
+        <span class="phase-label__line"></span>
+        <span class="phase-label__text">Core Pages</span>
+      </div>
+
+      <div class="card" data-id="collection">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Collection Page <span class="card__badge badge--page">Page</span></div>
+            <div class="card__files">sections/collection.liquid + templates/collection.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Product browsing page at /collections/handle. Dynamic title and description via closest.collection. Product grid with pagination.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Collection title + description header</li>
+            <li class="card__task">Product grid — paginate by 12 or 24</li>
+            <li class="card__task">Product cards — image, title, price</li>
+            <li class="card__task">Pagination links at bottom</li>
+            <li class="card__task">Empty collection state</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/collection.liquid</span>
+            <span class="file-tag">templates/collection.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="product">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Product Page <span class="card__badge badge--page">Page</span></div>
+            <div class="card__files">sections/product.liquid + templates/product.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Most important page — where buying decisions happen. Image gallery left, details right. Variants, quantity, Add to Cart form using product.selected_or_first_available_variant.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Product image gallery / slideshow</li>
+            <li class="card__task">Title, vendor, price display</li>
+            <li class="card__task">Variant selector — buttons or dropdowns</li>
+            <li class="card__task">Quantity input + Add to Cart button</li>
+            <li class="card__task">Product description</li>
+            <li class="card__task">Related products section</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/product.liquid</span>
+            <span class="file-tag">templates/product.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="cart">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Cart Page <span class="card__badge badge--page">Page</span></div>
+            <div class="card__files">sections/cart.liquid + templates/cart.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Cart at /cart. Loop through cart.items. Two column layout — items left, order summary right. Form posts to routes.cart_url with updates[] array.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Loop cart.items — image, title, variant, price</li>
+            <li class="card__task">Quantity input with name="updates[]"</li>
+            <li class="card__task">Remove link via item.url_to_remove</li>
+            <li class="card__task">Order summary — subtotal, checkout button</li>
+            <li class="card__task">Empty cart state</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/cart.liquid</span>
+            <span class="file-tag">templates/cart.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="search">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Search Page <span class="card__badge badge--page">Page</span></div>
+            <div class="card__files">sections/search.liquid</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Search at /search. Form posts to routes.search_url with ?q= parameter. Loop search.results which can be products, articles or pages.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Search form — input + submit button</li>
+            <li class="card__task">Results grid with image, title, price</li>
+            <li class="card__task">Results count display</li>
+            <li class="card__task">No results empty state</li>
+            <li class="card__task">Pagination via paginate tag</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/search.liquid</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-label">
+        <span class="phase-label__number">05</span>
+        <span class="phase-label__line"></span>
+        <span class="phase-label__text">Supporting Pages</span>
+      </div>
+
+      <div class="card" data-id="404">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">404 Page <span class="card__badge badge--page">Page</span></div>
+            <div class="card__files">sections/404.liquid + templates/404.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Shown when a URL doesn't exist. Keep it branded and helpful. Use routes.root_url for the home link.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Big 404 number</li>
+            <li class="card__task">Friendly error message</li>
+            <li class="card__task">Back to home button</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/404.liquid</span>
+            <span class="file-tag">templates/404.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="page">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Generic Page <span class="card__badge badge--page">Page</span></div>
+            <div class="card__files">sections/page.liquid + templates/page.json</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Used for About, Contact, FAQ, Privacy Policy. Content written in Admin → Pages. Use closest.page.title and closest.page.content.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Render closest.page.title as h1</li>
+            <li class="card__task">Render closest.page.content as body</li>
+            <li class="card__task">Style the RTE content (headings, lists, links)</li>
+            <li class="card__task">Create About + Contact pages in Admin</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/page.liquid</span>
+            <span class="file-tag">templates/page.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="blog">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Blog + Article <span class="card__badge badge--page">Page</span></div>
+            <div class="card__files">sections/blog.liquid + sections/article.liquid</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Blog listing at /blogs/handle. Article at /blogs/handle/article-handle. Loop blog.articles for listing. Use article object for single post.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Blog listing — article cards grid</li>
+            <li class="card__task">Article — title, date, author, featured image</li>
+            <li class="card__task">Article content via article.content</li>
+            <li class="card__task">Pagination for blog listing</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/blog.liquid</span>
+            <span class="file-tag">sections/article.liquid</span>
+            <span class="file-tag">templates/blog.json</span>
+            <span class="file-tag">templates/article.json</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="password">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Password Page <span class="card__badge badge--page">Page</span></div>
+            <div class="card__files">sections/password.liquid</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Coming soon page shown when store is password protected. Form posts to /password with password field.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Brand name + coming soon message</li>
+            <li class="card__task">Password input + submit button</li>
+            <li class="card__task">Minimal styled layout</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">sections/password.liquid</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-label">
+        <span class="phase-label__number">06</span>
+        <span class="phase-label__line"></span>
+        <span class="phase-label__text">Launch</span>
+      </div>
+
+      <div class="card" data-id="github">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Push to GitHub <span class="card__badge badge--deploy">Deploy</span></div>
+            <div class="card__files">git init → git push origin main</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Push theme to GitHub for version control. Connect to Shopify for auto-deploy on every push — professional workflow.</p>
+          <ul class="card__tasks">
+            <li class="card__task">git init (if not already done)</li>
+            <li class="card__task">git add . && git commit -m "Initial theme"</li>
+            <li class="card__task">Create repo on GitHub and push</li>
+            <li class="card__task">Admin → Themes → Add theme → GitHub</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">git push origin main</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="test">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Test Everything <span class="card__badge badge--deploy">Deploy</span></div>
+            <div class="card__files">All pages — desktop + mobile</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">Test every page on both desktop and mobile before going live. Check the full customer journey from homepage to checkout.</p>
+          <ul class="card__tasks">
+            <li class="card__task">Homepage — hero, products, all sections</li>
+            <li class="card__task">Collection — grid, pagination</li>
+            <li class="card__task">Product — variants, add to cart</li>
+            <li class="card__task">Cart — update qty, remove, checkout</li>
+            <li class="card__task">Search — results, no results</li>
+            <li class="card__task">Mobile — all pages and menus</li>
+            <li class="card__task">404 — visit a bad URL</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">All templates</span>
+            <span class="file-tag">Mobile + Desktop</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-id="publish">
+        <div class="card__header">
+          <div class="card__checkbox" onclick="toggleDone(event,this)">
+            <svg viewBox="0 0 12 12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg>
+          </div>
+          <div class="card__info">
+            <div class="card__title">Publish 🚀 <span class="card__badge badge--deploy">Deploy</span></div>
+            <div class="card__files">shopify theme push → Admin → Publish</div>
+          </div>
+          <div class="card__toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+        </div>
+        <div class="card__body">
+          <p class="card__note">The final step. Push the theme and publish it live. The store goes live with your custom theme!</p>
+          <ul class="card__tasks">
+            <li class="card__task">shopify theme push --store your-store.myshopify.com</li>
+            <li class="card__task">Admin → Online Store → Themes</li>
+            <li class="card__task">Find your theme → click Publish</li>
+            <li class="card__task">Celebrate! 🎉</li>
+          </ul>
+          <div class="card__file-tags">
+            <span class="file-tag">shopify theme push</span>
+            <span class="file-tag">Admin → Themes → Publish</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <footer class="site-footer">
+      <span>// SHOPIFY THEME DEV ROADMAP</span> — smooth sea never made a good sailor
+    </footer>
+
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'shopify-roadmap-v1';
+
+    // ── Load saved state ──
+    function loadState() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+      catch { return {}; }
+    }
+
+    function saveState(state) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    const state = loadState();
+
+    // ── Apply saved done states ──
+    document.querySelectorAll('.card').forEach(card => {
+      if (state.done && state.done[card.dataset.id]) {
+        card.classList.add('is-done');
+      }
+    });
+
+    // ── Apply saved project info ──
+    if (state.project) {
+      const p = state.project;
+      if (p.store) document.getElementById('display-store').textContent = p.store;
+      if (p.url) document.getElementById('display-url').textContent = p.url;
+      if (p.theme) document.getElementById('display-theme').textContent = p.theme;
+      if (p.type) document.getElementById('display-type').textContent = p.type;
+    }
+
+    updateProgress();
+
+    // ── Toggle card open ──
+    document.querySelectorAll('.card__header').forEach(header => {
+      header.addEventListener('click', e => {
+        if (e.target.closest('.card__checkbox')) return;
+        header.closest('.card').classList.toggle('is-open');
+      });
+    });
+
+    // ── Toggle done ──
+    function toggleDone(e, checkbox) {
+      e.stopPropagation();
+      const card = checkbox.closest('.card');
+      card.classList.toggle('is-done');
+
+      const s = loadState();
+      if (!s.done) s.done = {};
+      s.done[card.dataset.id] = card.classList.contains('is-done');
+      saveState(s);
+      updateProgress();
+    }
+
+    // ── Progress ──
+    function updateProgress() {
+      const total = document.querySelectorAll('.card').length;
+      const done = document.querySelectorAll('.card.is-done').length;
+      const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+
+      // Bar
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-title').textContent = `${done} of ${total} tasks completed`;
+
+      // Ring
+      const circumference = 188.5;
+      const offset = circumference - (pct / 100) * circumference;
+      document.getElementById('ring-fill').style.strokeDashoffset = offset;
+      document.getElementById('ring-text').textContent = pct + '%';
+    }
+
+    // ── Modal ──
+    function openModal() {
+      const s = loadState();
+      const p = s.project || {};
+      document.getElementById('input-store').value = p.store || '';
+      document.getElementById('input-url').value = p.url || '';
+      document.getElementById('input-theme').value = p.theme || '';
+      document.getElementById('input-type').value = p.type || '';
+      document.getElementById('modal').classList.add('is-open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('is-open');
+    }
+
+    function saveProject() {
+      const project = {
+        store: document.getElementById('input-store').value || '—',
+        url: document.getElementById('input-url').value || '—',
+        theme: document.getElementById('input-theme').value || '—',
+        type: document.getElementById('input-type').value || '—',
+      };
+
+      document.getElementById('display-store').textContent = project.store;
+      document.getElementById('display-url').textContent = project.url;
+      document.getElementById('display-theme').textContent = project.theme;
+      document.getElementById('display-type').textContent = project.type;
+
+      const s = loadState();
+      s.project = project;
+      saveState(s);
+      closeModal();
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal')) closeModal();
+    });
+
+    // Enter key saves modal
+    document.querySelectorAll('.modal__input').forEach(input => {
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') saveProject();
+      });
+    });
+  </script>
+
+</body>
+</html>
